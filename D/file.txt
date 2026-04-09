@@ -1,0 +1,231 @@
+🧠 Distributed Circuit Breaker Strategy for Supplier Connectors
+📌 Context
+
+Our system integrates with multiple suppliers via connector services. Each connector supports multiple configurations such as:
+
+Prepaid inventory
+Postpaid inventory
+
+Additionally, failures are sometimes observed at a more granular level:
+
+Specific brands/chains
+Not the entire supplier or configuration
+
+We also run multiple connector pods, making the system distributed.
+
+🎯 Problem Statement
+
+We need a mechanism to:
+
+Prevent repeated calls to failing supplier endpoints
+Isolate failures at the right granularity (config / brand)
+Ensure consistency across distributed pods
+Maintain high availability for unaffected traffic
+⚙️ What is a Circuit Breaker?
+
+A circuit breaker prevents repeated calls to failing systems using a state machine:
+
+CLOSED → (failures ↑) → OPEN → (cooldown) → HALF-OPEN → CLOSED / OPEN
+States:
+CLOSED → Normal operation
+OPEN → Calls blocked (fail fast)
+HALF-OPEN → Trial requests to check recovery
+🧩 Design Dimensions
+
+We need to decide across 3 axes:
+
+1. Granularity
+Supplier-level
+Config-level (prepaid/postpaid)
+Brand-level
+2. Placement
+USG (routing layer)
+Connector (execution layer)
+3. Distribution
+Local (per pod)
+Shared (distributed via cache like Redis)
+🏗️ Design Options
+🔹 Option 1: Circuit Breaker per Supplier (Coarse)
+Key:
+EPS
+HB
+Priceline
+Flow:
+Request → USG → Connector → Circuit Breaker (Supplier)
+✅ Pros
+Simple to implement
+Minimal state management
+Easy to monitor
+❌ Cons
+Over-blocking
+Prepaid failure blocks postpaid ❌
+Loss of valid inventory
+🔹 Option 2: Circuit Breaker per Supplier + Config
+Key:
+EPS_PREPAID
+EPS_POSTPAID
+Flow:
+Request → USG → Connector → CB (Supplier + Config)
+✅ Pros
+Good isolation between prepaid/postpaid
+Balanced complexity vs benefit
+Industry standard baseline
+❌ Cons
+Still coarse for brand-specific failures
+May block valid traffic within config
+🔹 Option 3: Circuit Breaker per Supplier + Config + Brand (Fine-Grained)
+Key:
+EPS_PREPAID_MARRIOTT
+EPS_PREPAID_HILTON
+Flow:
+Request → USG → Decision (Brand-aware CB) → Connector
+✅ Pros
+High precision failure isolation
+Maximum availability
+Prevents unnecessary traffic drops
+❌ Cons
+High cardinality (many keys)
+Risk of false positives (low traffic)
+Increased complexity
+🔹 Option 4: Hierarchical Circuit Breaker (Recommended Granularity)
+Key Strategy:
+Level 1: Supplier + Config + Brand
+Level 2: Supplier + Config
+Decision Flow:
+IF Brand-Level CB OPEN → Skip
+ELSE IF Config-Level CB OPEN → Skip
+ELSE → Call Connector
+✅ Pros
+Best balance of precision + safety
+Fallback protection
+Avoids over-fragmentation
+❌ Cons
+Slightly more logic
+Requires structured key design
+📍 Placement Options
+🔹 Option A: Circuit Breaker at Connector Only
+USG → Connector → CB → Supplier
+✅ Pros
+Protects actual API calls
+Easy to integrate using libraries like Polly
+❌ Cons
+USG still routes traffic blindly
+Wasted calls before failure detected
+🔹 Option B: Circuit Breaker at USG Only
+USG (CB) → Connector → Supplier
+✅ Pros
+Smart routing
+Avoid unnecessary calls
+❌ Cons
+No protection at execution layer
+Risk if connectors used elsewhere
+🏆 Option C: Dual Layer (Recommended)
+USG (Routing CB) → Connector (Execution CB) → Supplier
+✅ Pros
+Smart routing + safe execution
+Best resilience
+Industry best practice
+❌ Cons
+Slightly higher complexity
+🌐 Distributed System Challenge
+
+We run multiple pods:
+
+Pod A → CB State = OPEN
+Pod B → CB State = CLOSED
+Pod C → CB State = HALF-OPEN
+
+❌ Leads to inconsistent behavior
+
+🏗️ Distribution Strategies
+🔹 Option 1: Local Circuit Breaker (Per Pod)
+✅ Pros
+Fast
+Simple
+No external dependency
+❌ Cons
+Inconsistent across pods
+Slow failure detection globally
+🔹 Option 2: Fully Shared Circuit Breaker (Redis)
+Flow:
+All pods read/write CB state from Redis
+✅ Pros
+Strong consistency
+Fast global reaction
+❌ Cons
+Added latency
+Infra dependency
+Complexity in state management
+🏆 Option 3: Hybrid Approach (Recommended)
+Architecture:
+            ┌───────────────┐
+            │   Redis (CB)  │
+            └──────┬────────┘
+                   │
+     ┌─────────────┼─────────────┐
+     │             │             │
+ ┌───────┐     ┌───────┐     ┌───────┐
+ │ Pod A │     │ Pod B │     │ Pod C │
+ │ Local │     │ Local │     │ Local │
+ │  CB   │     │  CB   │     │  CB   │
+ └───────┘     └───────┘     └───────┘
+Flow:
+Check Redis (global state)
+If OPEN → skip
+Else → use local CB
+On OPEN → sync to Redis (with TTL)
+✅ Pros
+Fast local decisions
+Global consistency
+Scalable
+❌ Cons
+Moderate complexity
+Requires TTL management
+📊 Trade-Off Summary
+Dimension	Option	Pros	Cons
+Granularity	Supplier	Simple	Over-blocking
+Granularity	Config	Balanced	Limited precision
+Granularity	Brand	Precise	High complexity
+Granularity	Hierarchical	Best balance	Slight logic overhead
+Placement	Connector	Safe execution	No smart routing
+Placement	USG	Smart routing	No execution safety
+Placement	Dual	Best resilience	More setup
+Distribution	Local	Fast	Inconsistent
+Distribution	Shared	Consistent	Slower, complex
+Distribution	Hybrid	Best balance	Moderate complexity
+⚠️ Key Pitfalls
+High cardinality (too many keys)
+False positives (low traffic)
+State inconsistency across pods
+Debugging complexity
+Retry + CB interaction issues
+Supplier starvation (routing bias)
+🧠 Recommended Architecture
+✅ Granularity:
+Supplier + Config (default)
+Add Brand-level selectively
+Use hierarchical fallback
+✅ Placement:
+USG (routing decisions)
+Connector (execution protection)
+✅ Distribution:
+Hybrid (Local + Redis sync)
+🎯 Final Flow (End-to-End)
+Request → USG
+
+→ Check Redis CB
+    → If OPEN → Skip
+
+→ Check Local CB
+    → If CLOSED → Call Connector
+
+→ Connector CB executes
+
+→ On failure threshold:
+    → Open Local CB
+    → Sync to Redis (TTL)
+💬 Executive Summary
+
+We are implementing a multi-layered, distributed circuit breaker system that operates at supplier, configuration, and optionally brand level.
+This ensures failures are isolated precisely, unnecessary calls are avoided, and healthy traffic continues unaffected.
+By combining local fast detection with shared global state, we achieve both performance and consistency across all pods.
