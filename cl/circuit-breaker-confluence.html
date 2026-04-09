@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Granular Circuit Breaker Pattern for Supplier Connectors</title>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    color: #172B4D;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 32px 24px;
+    background: #fff;
+  }
+
+  /* Page header */
+  .page-header {
+    border-bottom: 3px solid #0052CC;
+    padding-bottom: 24px;
+    margin-bottom: 36px;
+  }
+  .page-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #0052CC;
+    margin: 0 0 8px 0;
+  }
+  .page-meta {
+    font-size: 13px;
+    color: #6B778C;
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+  .page-meta span { display: flex; align-items: center; gap: 6px; }
+
+  /* Status badge */
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .badge-proposal { background: #DEEBFF; color: #0052CC; }
+  .badge-review   { background: #FFF0B3; color: #172B4D; }
+  .badge-approved { background: #E3FCEF; color: #006644; }
+
+  /* Info panel (Confluence "info" macro equivalent) */
+  .panel {
+    border-radius: 4px;
+    padding: 16px 20px;
+    margin: 20px 0;
+    border-left: 4px solid;
+  }
+  .panel-info    { background: #DEEBFF; border-color: #0052CC; }
+  .panel-warning { background: #FFFAE6; border-color: #FF991F; }
+  .panel-success { background: #E3FCEF; border-color: #00875A; }
+  .panel-danger  { background: #FFEBE6; border-color: #DE350B; }
+  .panel-title {
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    color: #172B4D;
+  }
+  .panel p { margin: 0; font-size: 14px; }
+
+  /* Section headings */
+  h1 { font-size: 26px; color: #172B4D; font-weight: 700; margin: 40px 0 12px; border-bottom: 1px solid #DFE1E6; padding-bottom: 8px; }
+  h2 { font-size: 20px; color: #172B4D; font-weight: 700; margin: 32px 0 10px; }
+  h3 { font-size: 16px; color: #172B4D; font-weight: 700; margin: 24px 0 8px; }
+
+  /* TOC */
+  .toc {
+    background: #F4F5F7;
+    border-radius: 4px;
+    padding: 20px 24px;
+    margin: 24px 0 36px;
+    display: inline-block;
+    min-width: 280px;
+  }
+  .toc-title { font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; color: #6B778C; }
+  .toc ol { margin: 0; padding-left: 20px; }
+  .toc li { margin: 6px 0; }
+  .toc a { color: #0052CC; text-decoration: none; font-size: 14px; }
+  .toc a:hover { text-decoration: underline; }
+
+  /* Problem/solution highlight cards */
+  .cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 20px 0;
+  }
+  .card {
+    border-radius: 6px;
+    padding: 18px 20px;
+    border: 1px solid #DFE1E6;
+  }
+  .card h4 { margin: 0 0 10px; font-size: 14px; font-weight: 700; }
+  .card ul { margin: 0; padding-left: 18px; font-size: 14px; }
+  .card li { margin: 4px 0; }
+  .card-problem { background: #FFEBE6; border-color: #FFBDAD; }
+  .card-problem h4 { color: #BF2600; }
+  .card-solution { background: #E3FCEF; border-color: #ABF5D1; }
+  .card-solution h4 { color: #006644; }
+
+  /* Architecture diagram placeholder */
+  .diagram-box {
+    border: 2px dashed #B3BAC5;
+    border-radius: 8px;
+    padding: 32px 24px;
+    text-align: center;
+    background: #FAFBFC;
+    margin: 20px 0;
+    color: #6B778C;
+    font-size: 14px;
+  }
+  .diagram-box strong { display: block; font-size: 15px; margin-bottom: 6px; color: #172B4D; }
+
+  /* Code block */
+  pre, code {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 13px;
+  }
+  pre {
+    background: #F4F5F7;
+    border: 1px solid #DFE1E6;
+    border-radius: 4px;
+    padding: 16px 20px;
+    overflow-x: auto;
+    line-height: 1.6;
+    margin: 16px 0;
+  }
+  code {
+    background: #F4F5F7;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 13px;
+  }
+  pre code { background: none; padding: 0; }
+
+  /* Table */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 16px 0;
+    font-size: 14px;
+  }
+  th {
+    background: #0052CC;
+    color: #fff;
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 13px;
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #DFE1E6;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: #F4F5F7; }
+  tr:hover td { background: #EBECF0; }
+
+  /* State badges in tables */
+  .state-closed  { background: #E3FCEF; color: #006644; padding: 2px 8px; border-radius: 3px; font-weight: 700; font-size: 12px; }
+  .state-open    { background: #FFEBE6; color: #BF2600; padding: 2px 8px; border-radius: 3px; font-weight: 700; font-size: 12px; }
+  .state-half    { background: #FFFAE6; color: #974F0C; padding: 2px 8px; border-radius: 3px; font-weight: 700; font-size: 12px; }
+
+  /* Decision table rows with color coding */
+  .decision-yes td:last-child { color: #006644; font-weight: 600; }
+  .decision-no  td:last-child { color: #BF2600; font-weight: 600; }
+
+  /* Numbered step list */
+  .steps ol { padding-left: 24px; }
+  .steps li { margin: 10px 0; font-size: 15px; }
+  .steps li strong { color: #0052CC; }
+
+  /* Section separator */
+  hr { border: none; border-top: 1px solid #DFE1E6; margin: 40px 0; }
+
+  /* Related links */
+  .related { background: #F4F5F7; border-radius: 6px; padding: 16px 20px; margin-top: 40px; }
+  .related h4 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: #6B778C; }
+  .related ul { margin: 0; padding-left: 20px; font-size: 14px; }
+  .related li { margin: 5px 0; }
+  .related a { color: #0052CC; text-decoration: none; }
+
+  @media (max-width: 640px) {
+    .cards { grid-template-columns: 1fr; }
+    .page-meta { flex-direction: column; gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     PAGE HEADER
+═══════════════════════════════════════════ -->
+<div class="page-header">
+  <div style="margin-bottom: 10px;">
+    <span class="badge badge-proposal">RFC · Proposal</span>
+  </div>
+  <h1 class="page-title">Granular Circuit Breaker Pattern for Supplier Connectors</h1>
+  <p style="font-size:16px; color:#42526E; margin: 8px 0 0;">
+    Isolating supplier failures at the <em>configuration</em> and <em>brand/chain</em> level — without modifying connector code.
+  </p>
+  <div class="page-meta">
+    <span>📅 <strong>Created:</strong> April 2026</span>
+    <span>👤 <strong>Author:</strong> [Your Name]</span>
+    <span>🏷️ <strong>Area:</strong> Platform / Resilience Engineering</span>
+    <span>👥 <strong>Audience:</strong> Solution Architects</span>
+  </div>
+</div>
+
+
+<!-- TOC -->
+<div class="toc">
+  <div class="toc-title">Contents</div>
+  <ol>
+    <li><a href="#executive-summary">Executive Summary</a></li>
+    <li><a href="#problem">The Problem We Are Solving</a></li>
+    <li><a href="#current-state">Current State</a></li>
+    <li><a href="#proposed-solution">Proposed Solution</a></li>
+    <li><a href="#cb-key">The CB Key Design</a></li>
+    <li><a href="#state-machine">Circuit Breaker State Machine</a></li>
+    <li><a href="#usg-resolution">USG Resolution Logic</a></li>
+    <li><a href="#brand-chain">Brand / Chain Granularity</a></li>
+    <li><a href="#fallback">Fallback Strategy</a></li>
+    <li><a href="#implementation">Implementation Guidance</a></li>
+    <li><a href="#decision">Decision Matrix</a></li>
+    <li><a href="#open-questions">Open Questions</a></li>
+  </ol>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     1. EXECUTIVE SUMMARY
+═══════════════════════════════════════════ -->
+<h1 id="executive-summary">1. Executive Summary</h1>
+
+<div class="panel panel-info">
+  <div class="panel-title">📌 TL;DR</div>
+  <p>
+    Today, when a supplier partially fails (e.g., EPS fails for prepaid but succeeds for postpaid), our system treats the connector as a single unit — causing unnecessary failures across healthy configurations. This RFC proposes adding a <strong>configuration-level (and optionally brand/chain-level) circuit breaker</strong> inside the <strong>USG layer</strong>, keyed by <code>supplierId + configurationId [+ brandId]</code>. This isolates partial failures without touching any connector code.
+  </p>
+</div>
+
+<div class="cards">
+  <div class="card card-problem">
+    <h4>❌ Without this change</h4>
+    <ul>
+      <li>One failing configuration trips the whole connector</li>
+      <li>Healthy configurations are blocked unnecessarily</li>
+      <li>Brand-specific failures go undetected until they flood logs</li>
+      <li>No automatic recovery — manual intervention required</li>
+    </ul>
+  </div>
+  <div class="card card-solution">
+    <h4>✅ With this change</h4>
+    <ul>
+      <li>Each configuration has its own independent CB state</li>
+      <li>Healthy configs continue serving requests unaffected</li>
+      <li>Brand/chain failures are isolated and tracked separately</li>
+      <li>Automatic probe + recovery via HALF-OPEN state</li>
+    </ul>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     2. THE PROBLEM
+═══════════════════════════════════════════ -->
+<h1 id="problem">2. The Problem We Are Solving</h1>
+
+<h2>2.1 Context — How Our Connector System Works</h2>
+<p>
+  We have a set of supplier connectors written in C# — one per supplier (EPS, HB, Priceline, etc.). Each connector is shared across multiple <strong>configurations</strong>. For example, the EPS price connector serves:
+</p>
+<ul>
+  <li><strong>Prepaid configuration</strong> — fetches rates for prepaid inventory</li>
+  <li><strong>Postpaid configuration</strong> — fetches rates for postpaid inventory</li>
+</ul>
+<p>
+  The <strong>USG (Unified Search Gateway)</strong> layer sits above all connectors, decides which configuration to invoke, and curates the aggregated response.
+</p>
+
+<h2>2.2 Real Failure Patterns We Have Observed</h2>
+<p>Three distinct failure patterns have been observed in production:</p>
+
+<table>
+  <thead>
+    <tr><th>Pattern</th><th>Example</th><th>Current Impact</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Config-level failure</strong></td>
+      <td>EPS prepaid times out; postpaid is healthy</td>
+      <td>All EPS traffic slows — postpaid unnecessarily delayed</td>
+    </tr>
+    <tr>
+      <td><strong>Brand/chain failure</strong></td>
+      <td>EPS prepaid fails for Hilton chain only</td>
+      <td>Hilton errors mix with healthy responses — hard to isolate</td>
+    </tr>
+    <tr>
+      <td><strong>Full supplier failure</strong></td>
+      <td>EPS is completely down</td>
+      <td>All configs fail — handled partially today</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="panel panel-warning">
+  <div class="panel-title">⚠️ Key Insight</div>
+  <p>
+    Patterns 1 and 2 are the most common in practice and the least handled. A supplier can be <em>partially healthy</em> — and our current architecture has no mechanism to leverage that.
+  </p>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     3. CURRENT STATE
+═══════════════════════════════════════════ -->
+<h1 id="current-state">3. Current State</h1>
+
+<p>Today's failure handling (if any) is coarse-grained:</p>
+<ul>
+  <li>Circuit breakers (if implemented) are at the <strong>connector level</strong> — one state per supplier</li>
+  <li>There is no mechanism to distinguish <em>which configuration</em> is failing within a supplier</li>
+  <li>There is no mechanism to detect <em>brand or chain specific</em> degradation</li>
+  <li>Recovery is manual — no automatic probing once a supplier is marked as failed</li>
+</ul>
+
+
+<!-- ═══════════════════════════════════════════
+     4. PROPOSED SOLUTION
+═══════════════════════════════════════════ -->
+<h1 id="proposed-solution">4. Proposed Solution — Granular Circuit Breakers in USG</h1>
+
+<h2>4.1 Why USG Is the Right Layer</h2>
+<p>
+  The USG layer is uniquely positioned because it already knows — before making any connector call — the exact <strong>supplier + configuration + brand/chain</strong> context of each request. This makes it the ideal enforcement point for circuit breakers. Adding CBs here means:
+</p>
+<ul>
+  <li>Zero changes to any connector code</li>
+  <li>A single, consistent policy enforced across all suppliers</li>
+  <li>One place to monitor, alert on, and tune CB behavior</li>
+</ul>
+
+<div class="diagram-box">
+  <strong>Architecture Overview</strong>
+  📎 <em>Paste your architecture diagram here (exported from draw.io / Confluence diagram macro)</em><br>
+  Layers: Client → USG [CB Registry] → Connector (C#) → Supplier API<br>
+  CB keys: <code>eps:prepaid</code> · <code>eps:postpaid</code> · <code>eps:prepaid:hilton</code>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     5. CB KEY DESIGN
+═══════════════════════════════════════════ -->
+<h1 id="cb-key">5. The CB Key Design</h1>
+
+<p>
+  This is the most critical design decision. Each circuit breaker is identified by a <strong>composite key</strong>:
+</p>
+
+<pre><code>CB_KEY = {supplierId}:{configurationId}[:{brandOrChainId}]</code></pre>
+
+<h3>Example Keys</h3>
+<table>
+  <thead>
+    <tr><th>CB Key</th><th>What It Guards</th><th>Granularity</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>eps:prepaid</code></td><td>EPS prepaid configuration globally</td><td>Config-level</td></tr>
+    <tr><td><code>eps:postpaid</code></td><td>EPS postpaid configuration globally</td><td>Config-level</td></tr>
+    <tr><td><code>hb:prepaid</code></td><td>HB prepaid configuration globally</td><td>Config-level</td></tr>
+    <tr><td><code>eps:prepaid:hilton</code></td><td>EPS prepaid, Hilton chain only</td><td>Brand/chain-level</td></tr>
+    <tr><td><code>eps:prepaid:marriott</code></td><td>EPS prepaid, Marriott chain only</td><td>Brand/chain-level</td></tr>
+    <tr><td><code>priceline:postpaid:accor</code></td><td>Priceline postpaid, Accor chain only</td><td>Brand/chain-level</td></tr>
+  </tbody>
+</table>
+
+<div class="panel panel-info">
+  <div class="panel-title">💡 Key Design Principle</div>
+  <p>
+    Brand/chain keys are <strong>additive and layered</strong>. USG checks from most-specific to least-specific. If <code>eps:prepaid:hilton</code> is OPEN, the call is blocked — even if <code>eps:prepaid</code> is healthy. This means you get fine-grained protection without duplicating logic.
+  </p>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     6. STATE MACHINE
+═══════════════════════════════════════════ -->
+<h1 id="state-machine">6. Circuit Breaker State Machine</h1>
+
+<p>Each CB key tracks one of three states:</p>
+
+<table>
+  <thead>
+    <tr><th>State</th><th>Behavior</th><th>Transition</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="state-closed">CLOSED</span></td>
+      <td>Normal operation. All requests flow through to the connector.</td>
+      <td>→ OPEN when failure rate exceeds threshold in window</td>
+    </tr>
+    <tr>
+      <td><span class="state-open">OPEN</span></td>
+      <td>Failing. USG returns fallback immediately. Connector is NOT called.</td>
+      <td>→ HALF-OPEN after cooldown period (e.g., 30s)</td>
+    </tr>
+    <tr>
+      <td><span class="state-half">HALF-OPEN</span></td>
+      <td>Probe mode. One test request is allowed through to check recovery.</td>
+      <td>→ CLOSED on success · → OPEN on failure</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>6.1 Recommended Thresholds (Starting Point)</h2>
+<table>
+  <thead>
+    <tr><th>Parameter</th><th>Recommended Value</th><th>Notes</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Window type</td><td>Sliding time window</td><td>More accurate than count-based windows</td></tr>
+    <tr><td>Window duration</td><td>60 seconds</td><td>Tune per supplier SLA</td></tr>
+    <tr><td>Failure rate threshold</td><td>50%</td><td>Use rate, not absolute count</td></tr>
+    <tr><td>Minimum requests in window</td><td>10</td><td>Avoid tripping on low-traffic configs</td></tr>
+    <tr><td>Cooldown (OPEN → HALF-OPEN)</td><td>30 seconds</td><td>Start conservative, can reduce later</td></tr>
+  </tbody>
+</table>
+
+<div class="panel panel-warning">
+  <div class="panel-title">⚠️ Use failure rate, not absolute count</div>
+  <p>
+    An absolute error count of 5 means very different things at 10 req/min vs 10,000 req/min. A percentage threshold on a sliding window is far more reliable across different configuration traffic volumes.
+  </p>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     7. USG RESOLUTION LOGIC
+═══════════════════════════════════════════ -->
+<h1 id="usg-resolution">7. USG Resolution Logic — Step by Step</h1>
+
+<div class="steps">
+<ol>
+  <li><strong>Extract context</strong> from incoming request: <code>supplierId</code>, <code>configurationId</code>, <code>brandId</code> (if present)</li>
+  <li><strong>Build CB keys:</strong> brand-level key (<code>eps:prepaid:hilton</code>) and config-level key (<code>eps:prepaid</code>)</li>
+  <li><strong>Check brand-level CB key</strong> → if OPEN: return fallback immediately (skip steps 4–6)</li>
+  <li><strong>Check config-level CB key</strong> → if OPEN: return fallback immediately (skip steps 5–6)</li>
+  <li><strong>Dispatch to connector</strong> → execute the actual supplier call</li>
+  <li><strong>Record outcome</strong> (success or failure) against <em>both</em> the brand-level and config-level keys</li>
+  <li><strong>Return response</strong> to caller, including a metadata flag if a fallback was used</li>
+</ol>
+</div>
+
+<h2>7.1 Pseudocode</h2>
+<pre><code>// USG dispatch method (simplified)
+public async Task&lt;SupplierResponse&gt; Dispatch(SearchRequest request)
+{
+    var configKey = $"{request.SupplierId}:{request.ConfigId}";
+    var brandKey  = $"{configKey}:{request.BrandId}"; // null if no brand
+
+    // Check most-specific → least-specific
+    if (brandKey != null &amp;&amp; circuitBreakerRegistry.IsOpen(brandKey))
+        return FallbackResponse("brand_circuit_open", brandKey);
+
+    if (circuitBreakerRegistry.IsOpen(configKey))
+        return FallbackResponse("config_circuit_open", configKey);
+
+    try
+    {
+        var response = await connector.Execute(request);
+        circuitBreakerRegistry.RecordSuccess(configKey);
+        if (brandKey != null) circuitBreakerRegistry.RecordSuccess(brandKey);
+        return response;
+    }
+    catch (SupplierException ex)
+    {
+        circuitBreakerRegistry.RecordFailure(configKey);
+        if (brandKey != null) circuitBreakerRegistry.RecordFailure(brandKey);
+        throw;
+    }
+}</code></pre>
+
+
+<!-- ═══════════════════════════════════════════
+     8. BRAND / CHAIN GRANULARITY
+═══════════════════════════════════════════ -->
+<h1 id="brand-chain">8. Brand / Chain Granularity</h1>
+
+<h2>8.1 When to Use Brand-Level CBs</h2>
+<p>
+  Brand/chain-level circuit breakers are most valuable when a supplier returns data per-brand and some brands are systematically failing (e.g., incorrect mapping, missing inventory, API-side data issue for that chain).
+</p>
+
+<h2>8.2 Extraction Strategy</h2>
+<p>Brand context must be available <em>before</em> the call is dispatched. Two approaches:</p>
+
+<table>
+  <thead>
+    <tr><th>Approach</th><th>When to Use</th><th>Trade-off</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Request-time extraction</strong></td>
+      <td>Brand is part of the search request payload</td>
+      <td>✅ Cheapest — no extra work. Most common case.</td>
+    </tr>
+    <tr>
+      <td><strong>Response-tagging</strong></td>
+      <td>Brand only known after parsing supplier response</td>
+      <td>⚠️ More complex — must tag failures post-response with brand ID</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="panel panel-info">
+  <div class="panel-title">📋 Recommendation</div>
+  <p>
+    <strong>Start with config-level CBs only.</strong> Add brand/chain-level CBs only after you observe recurring brand-specific degradation patterns in production. This keeps the initial implementation simple and lets you validate the core mechanism first.
+  </p>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     9. FALLBACK STRATEGY
+═══════════════════════════════════════════ -->
+<h1 id="fallback">9. Fallback Strategy</h1>
+
+<p>When a CB is OPEN, USG should not simply return an error. The following fallback hierarchy is recommended:</p>
+
+<table>
+  <thead>
+    <tr><th>Priority</th><th>Fallback</th><th>When to Use</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>1</td><td><strong>Cached / stale rates</strong></td><td>If rate data has acceptable TTL for the use case</td></tr>
+    <tr><td>2</td><td><strong>Alternate supplier redirect</strong></td><td>If USG has a configured fallback supplier for that config</td></tr>
+    <tr><td>3</td><td><strong>Graceful empty result</strong></td><td>Return empty with metadata: <code>source: "circuit_breaker_fallback"</code></td></tr>
+  </tbody>
+</table>
+
+<div class="panel panel-success">
+  <div class="panel-title">✅ Always include fallback metadata</div>
+  <p>
+    Tag all fallback responses with a structured metadata field (e.g., <code>cbKey</code>, <code>cbState</code>, <code>fallbackType</code>). This allows downstream systems and monitoring tools to distinguish CB-triggered responses from real supplier responses.
+  </p>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     10. IMPLEMENTATION GUIDANCE
+═══════════════════════════════════════════ -->
+<h1 id="implementation">10. Implementation Guidance</h1>
+
+<h2>10.1 Recommended Stack</h2>
+<table>
+  <thead>
+    <tr><th>Concern</th><th>Recommendation</th><th>Rationale</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>CB library</td><td><strong>Polly v8 (C#)</strong></td><td>Native .NET, supports keyed CBs, well-maintained</td></tr>
+    <tr><td>CB state storage</td><td><strong>Redis</strong></td><td>Shared across USG instances; TTL-based sliding windows built-in</td></tr>
+    <tr><td>Key format</td><td><code>cb:{supplier}:{config}[:{brand}]</code></td><td>Namespaced to avoid Redis key collisions</td></tr>
+    <tr><td>Observability</td><td><strong>Custom metrics + existing APM</strong></td><td>Counter per CB key, state transition events</td></tr>
+  </tbody>
+</table>
+
+<h2>10.2 Redis Key Example</h2>
+<pre><code>// Redis hash per CB key
+cb:eps:prepaid         → { state: "OPEN",   failureRate: 0.63, windowStart: ... }
+cb:eps:postpaid        → { state: "CLOSED", failureRate: 0.04, windowStart: ... }
+cb:eps:prepaid:hilton  → { state: "HALF_OPEN", lastProbe: ... }
+</code></pre>
+
+<h2>10.3 Metrics to Expose</h2>
+<ul>
+  <li><code>cb.state_transitions</code> — count of CLOSED→OPEN, OPEN→HALF-OPEN, HALF-OPEN→CLOSED transitions, tagged by CB key</li>
+  <li><code>cb.fallback_served</code> — count of requests served from fallback, tagged by CB key and fallback type</li>
+  <li><code>cb.failure_rate</code> — current failure rate per CB key (gauge)</li>
+  <li><code>cb.open_duration_seconds</code> — how long each CB key has been OPEN</li>
+</ul>
+
+<h2>10.4 Phased Rollout</h2>
+<table>
+  <thead>
+    <tr><th>Phase</th><th>Scope</th><th>Goal</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Phase 1</strong></td><td>Config-level CBs for one supplier (EPS)</td><td>Validate mechanism, tune thresholds</td></tr>
+    <tr><td><strong>Phase 2</strong></td><td>Config-level CBs for all suppliers</td><td>Broad coverage, monitor for edge cases</td></tr>
+    <tr><td><strong>Phase 3</strong></td><td>Brand/chain-level CBs for high-volume brands</td><td>Fine-grained isolation where needed</td></tr>
+  </tbody>
+</table>
+
+
+<!-- ═══════════════════════════════════════════
+     11. DECISION MATRIX
+═══════════════════════════════════════════ -->
+<h1 id="decision">11. Decision Matrix</h1>
+
+<table>
+  <thead>
+    <tr><th>Question</th><th>Decision</th></tr>
+  </thead>
+  <tbody>
+    <tr class="decision-yes"><td>Where should CBs live?</td><td>USG layer — owns routing, single enforcement point</td></tr>
+    <tr class="decision-yes"><td>CB granularity level?</td><td>Config-level (mandatory) + Brand/chain-level (additive, optional)</td></tr>
+    <tr class="decision-yes"><td>Window type?</td><td>Sliding time window (60s) + failure rate threshold (50%)</td></tr>
+    <tr class="decision-yes"><td>State storage?</td><td>Redis — shared across all USG instances</td></tr>
+    <tr class="decision-yes"><td>CB library?</td><td>Polly v8 (C#) with Redis-backed distributed state</td></tr>
+    <tr class="decision-no"><td>Should connectors be modified?</td><td>No — USG fully owns this, connectors stay unchanged</td></tr>
+    <tr class="decision-no"><td>Should brand-level CBs be in Phase 1?</td><td>No — start with config-level, add brand-level after validation</td></tr>
+  </tbody>
+</table>
+
+
+<!-- ═══════════════════════════════════════════
+     12. OPEN QUESTIONS
+═══════════════════════════════════════════ -->
+<h1 id="open-questions">12. Open Questions for Architects</h1>
+
+<div class="panel panel-warning">
+  <div class="panel-title">🔍 Items requiring team input</div>
+  <p>Please add comments / decisions inline in Confluence.</p>
+</div>
+
+<ol>
+  <li>
+    <strong>Threshold values</strong> — Are 50% failure rate and 60s window appropriate for our SLAs, or should they be supplier-specific?
+  </li>
+  <li>
+    <strong>Redis availability</strong> — Do we have a Redis cluster already in USG's infrastructure, or does this require provisioning?
+  </li>
+  <li>
+    <strong>Fallback precedence</strong> — Should stale cache always take priority over alternate supplier redirect? Who owns this decision per configuration?
+  </li>
+  <li>
+    <strong>Manual override</strong> — Do we need an admin API to manually OPEN or CLOSE a CB key (e.g., for planned supplier maintenance)?
+  </li>
+  <li>
+    <strong>Brand identity</strong> — Is <code>brandId</code> / <code>chainId</code> consistently available in all search request payloads today, or does it require enrichment?
+  </li>
+  <li>
+    <strong>Alerting</strong> — When a CB transitions to OPEN, who is notified? What is the escalation path for supplier degradation?
+  </li>
+</ol>
+
+<hr>
+
+<!-- Related -->
+<div class="related">
+  <h4>📎 Related Pages &amp; References</h4>
+  <ul>
+    <li><a href="#">USG Architecture Overview</a> — internal</li>
+    <li><a href="#">EPS Connector Design Document</a> — internal</li>
+    <li><a href="https://www.martinfowler.com/bliki/CircuitBreaker.html">Circuit Breaker Pattern — Martin Fowler</a></li>
+    <li><a href="https://github.com/App-vNext/Polly">Polly .NET Resilience Library</a></li>
+    <li><a href="#">Supplier SLA Register</a> — internal</li>
+  </ul>
+</div>
+
+<div style="margin-top:40px; padding-top:20px; border-top:1px solid #DFE1E6; font-size:13px; color:#6B778C;">
+  <em>This is a living document. Please use Confluence inline comments for feedback. Last updated: April 2026.</em>
+</div>
+
+</body>
+</html>
