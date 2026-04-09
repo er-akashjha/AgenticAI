@@ -1,0 +1,18 @@
+Here's your Confluence-ready document. A few notes on how to use it:
+To publish in Confluence:
+
+Open the HTML file in a browser — it renders with full Confluence-like styling
+In Confluence, create a new page and switch to the "HTML macro" or paste content directly into the editor
+Alternatively, copy sections into the visual editor — the structure maps directly to Confluence formatting
+
+What's inside the document:
+
+An RFC-style header with status badge, author, and audience metadata
+A clickable table of contents
+Problem framing with color-coded before/after cards that make the pitch visually clear
+The full technical design (CB key schema, state machine, USG logic, fallback hierarchy, Polly + Redis guidance)
+A decision matrix so architects can quickly see what's already decided vs. open
+6 pointed open questions to drive the discussion in the review session
+A placeholder where you can paste your architecture diagram from draw.io or Confluence's diagram macro
+
+One thing to personalise: swap the [Your Name] in the metadata and fill in the internal links at the bottom (USG overview, EPS connector doc, SLA register).
