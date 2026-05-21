@@ -1,0 +1,128 @@
+📊 Executive Summary – Agoda Migration Performance vs Previous Priceline Baseline
+(Same duration comparison – Yesterday Priceline vs Current Agoda Suppliers)
+
+⸻
+
+🚨 Key Context
+
+The current Agoda supplier performance is being compared against yesterday’s Priceline supplier data for the same duration window.
+
+Objective of this comparison:
+
+* Validate Agoda replacement performance
+* Measure booking stability and conversion impact
+* Identify operational improvements after migration
+
+⸻
+
+📈 Supplier Performance Comparison
+
+Supplier	Hotel Search	Room Search	Rate Rules	Bookings
+Priceline UEP Booking.com (Yesterday Baseline)	69,363	3,595	49	10
+Priceline Deposit UEP NetRate (Yesterday Baseline)	35,873	4,223	16	2
+Priceline Deposit UEP SMOP (Yesterday Baseline)	35,970	4,224	110	18
+BHI (Agoda) (Current Supplier)	37,679	4,160	302	59
+
+⸻
+
+📊 Booking Success Comparison
+
+🟢 Overall Platform Booking Health
+
+Success  : █████████████████████████████ 98%
+Failure  : █ 2%
+
+⸻
+
+🔄 Supplier Migration Outcome
+
+Priceline Baseline (Yesterday)
+
+Booking Success : ████████████████████ 75%
+Failures        : ██████ 25%
+
+Agoda Supplier (Current)
+
+Booking Success : █████████████████████████████ 98%
+Failures        : █ 2%
+
+⸻
+
+📈 Visual Comparison
+
+Booking Volume
+
+Agoda (BHI)             ██████████████████████████████ 59
+Priceline SMOP          █████████ 18
+Priceline Booking.com   █████ 10
+Priceline NetRate       █ 2
+
+⸻
+
+Rate Rule Availability
+
+Agoda (BHI)             ██████████████████████████████ 302
+Priceline SMOP          ███████████ 110
+Priceline Booking.com   ████ 49
+Priceline NetRate       █ 16
+
+⸻
+
+🔍 Key Executive Insights
+
+✅ Agoda migration showing strong improvement
+
+* Booking count significantly improved (59 bookings)
+* Failure rate reduced drastically (25% → 2%)
+* Stronger inventory/rate-rule availability observed
+
+⚠️ Priceline baseline showed instability
+
+* Higher booking failures
+* Lower conversion efficiency
+* Reduced supplier reliability
+
+✅ Operational Impact
+
+The Agoda supplier replacement appears to have:
+
+* Improved booking stability
+* Increased successful conversions
+* Reduced customer-facing failures
+* Enhanced supplier response quality
+
+⸻
+
+🎯 Recommended Next Steps
+
+Immediate
+
+* Continue monitoring Agoda supplier stability
+* Validate performance during peak traffic hours
+
+Strategic
+
+* Consider phased reduction of unstable Priceline variants
+* Expand Agoda supplier routing if trends remain stable
+
+Monitoring Focus
+
+* Booking latency
+* Search-to-book conversion
+* Rate-rule consistency
+* Failure spikes during load
+
+⸻
+
+📌 Executive Takeaway
+
+✅ Agoda supplier migration is currently outperforming previous Priceline supplier benchmarks across:
+
+* booking success
+* booking volume
+* rate-rule availability
+* operational stability
+
+📉 Priceline baseline showed elevated failure rates and weaker conversion performance.
+
+📈 Early indicators suggest the Agoda replacement is delivering a positive operational and customer-impact outcome.
