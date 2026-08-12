@@ -1,0 +1,343 @@
+
+1. 🏆 Hotel Supply Executive Dashboard — #1 priority
+This should be your manager's landing page.
+Top KPI cards:
+Hotels available
+Searches / bookings
+Supplier coverage %
+Inventory availability %
+Lowest-price win %
+Average price competitiveness
+Average markup %
+Booking conversion
+Revenue / margin
+Supplier failure/error rate
+Then show:
+Supplier performance leaderboard
+Supplier
+Hotels
+Inventory
+Price Win %
+Availability
+Avg Markup
+Bookings
+Revenue
+Supplier A
+
+
+
+
+
+
+
+Supplier B
+
+
+
+
+
+
+
+Supplier C
+
+
+
+
+
+
+
+Then a "Where are we losing?" section.
+For example:
+🔴 Supplier B is losing price competitiveness in 18% of high-volume hotels
+🔴 Supplier C has 12% lower inventory coverage in key destinations
+🟢 Supplier A provides the best combination of availability + price
+This last section is what makes the dashboard manager-level rather than analyst-level.
+2. 💰 Price Competitiveness Dashboard
+This is particularly relevant given the hotel pricing/markup data you've worked with.
+I'd make this one extremely good.
+KPIs
+% Lowest Price
+% Within ₹100 of lowest
+% Within 2% of lowest
+Average price delta
+Median price delta
+Average markup
+Supplier win rate
+Main visualization
+Supplier × Hotel heatmap
+Rows:
+hotel_name
+Columns:
+OTASupplierFamily
+Values:
+MarkupPercent
+Exactly like the QuickSight analysis we discussed earlier.
+But add filters:
+Destination
+Hotel
+Supplier
+Hotel chain
+Star category
+Stay date
+Booking date
+Room type
+Occupancy
+Rate plan
+Then create:
+"Price Leakage"
+Show hotels where:
+Our displayed price > competitor/supplier lowest price
+For example:
+Taj Palace Mumbai
+Our price: ₹14,850
+Lowest supplier: ₹13,920
+Difference: ₹930 / 6.7%
+This gives your manager an immediate business action.
+3. 🏨 Inventory Availability Dashboard
+This is separate from price.
+Because having a competitive price doesn't matter if we don't have inventory.
+Track:
+Supplier inventory coverage
+Hotel search opportunities
+        ↓
+Supplier returned inventory
+        ↓
+Rooms available
+        ↓
+Bookable rooms
+KPIs:
+Inventory availability %
+Hotel coverage %
+Room coverage %
+Supplier response rate
+Empty response %
+API error %
+Timeout %
+Average response time
+Very important visualization
+Destination × Supplier availability heatmap
+Example:
+Destination
+Supplier A
+Supplier B
+Supplier C
+Supplier D
+Mumbai
+🟢 94%
+🟢 92%
+🟡 84%
+🔴 71%
+Dubai
+🟢 91%
+🔴 68%
+🟢 95%
+🟡 83%
+London
+🟡 85%
+🟢 93%
+🟢 91%
+🔴 73%
+Now you're not merely saying:
+"Supplier C has low inventory."
+You're saying:
+"Supplier C's London inventory coverage is materially below our other suppliers."
+That's much more powerful.
+4. 🥇 Supplier Scorecard
+I'd actually create a Supplier Health Score.
+Something like:
+Supplier Score =
+25% Price competitiveness
+25% Inventory coverage
+20% Booking conversion
+15% Reliability
+15% Margin contribution
+Then:
+Supplier
+Overall
+Price
+Inventory
+Reliability
+Conversion
+Margin
+A
+91
+94
+89
+96
+87
+92
+B
+84
+91
+78
+93
+85
+86
+C
+72
+68
+91
+76
+73
+79
+This is executive-friendly.
+Your manager can immediately ask:
+"Why did Supplier C drop?"
+And your dashboard can drill down.
+5. 📈 Revenue & Margin Dashboard
+This moves your reporting from operations → business impact.
+Track:
+Gross booking value
+Revenue
+Margin
+Markup
+Margin %
+Bookings
+Average booking value
+Cancellation value
+Net revenue
+Revenue by supplier
+Revenue by destination
+Revenue by hotel
+The killer visualization:
+Revenue vs Margin matrix
+X-axis:
+Revenue
+Y-axis:
+Margin %
+Bubble size:
+Bookings
+Then you can identify:
+⭐ Stars
+High revenue + high margin
+💰 Volume drivers
+High revenue + low margin
+💎 Hidden opportunities
+Low revenue + high margin
+🚨 Problems
+High bookings + low margin
+That is the kind of visualization senior managers tend to like because it supports decision making.
+6. 🔎 Hotel Opportunity Dashboard
+This is where I would try to differentiate yourself.
+Instead of reporting what happened, identify what should we do?
+Create an "Opportunity Engine."
+For every hotel:
+Opportunity Score
+based on:
+Search volume
+Booking volume
+Price competitiveness
+Inventory availability
+Supplier coverage
+Margin
+Conversion
+Then surface:
+Top 50 hotels requiring attention
+Example:
+#1 Marriott Downtown Dubai
+Searches: 42,300
+Bookings: 3,820
+Conversion: 9.0%
+Price competitiveness: 62%
+Inventory coverage: 94%
+Potential revenue opportunity: ₹X
+Then:
+Recommended action: Improve pricing competitiveness
+This is much more impressive than another chart showing monthly bookings.
+7. 🚨 Supplier / API Operational Health Dashboard
+This one is especially useful if your team also deals with supplier integrations.
+Track:
+API success %
+API failure %
+Timeout %
+Response time
+Empty responses
+Search latency
+Booking failure %
+Cancellation failure %
+Error codes
+Supplier downtime
+Inventory feed freshness
+Create a "Supplier Incident Radar"
+For example:
+Supplier B
+🔴 Search failures ↑ 18%
+🔴 Response time ↑ 31%
+🟡 Inventory ↓ 8%
+Then drill down:
+API endpoint → destination → hotel → error code → timestamp
+This makes your dashboard useful to both business + technology teams.
+The dashboard I think will REALLY impress your manager
+I'd create one additional concept:
+🧠 "Hotel Supply Command Center"
+This isn't another reporting dashboard.
+It's the executive cockpit.
+At the top:
+Hotel Business Health
+92 / 100
+Then:
+Dimension
+Score
+Trend
+Price Competitiveness
+88
+↑
+Inventory Coverage
+94
+→
+Supplier Health
+91
+↑
+Revenue
+89
+↑
+Margin
+93
+↑
+Conversion
+84
+↓
+Then below:
+🔴 Top 5 Issues
+Supplier B losing price competitiveness in Mumbai
+Supplier C inventory coverage declining in London
+Hotel X conversion down 14%
+Supplier A API latency increased 21%
+High-volume hotel segment showing margin compression
+🟢 Top 5 Opportunities
+Improve pricing for top 50 searched hotels
+Increase Supplier C inventory in London
+Shift volume toward Supplier A where price + availability are superior
+Negotiate better rates for high-volume hotels
+Investigate low-conversion high-search hotels
+And here's the important part
+Don't make 7 disconnected dashboards.
+Make them a hierarchy:
+                 HOTEL SUPPLY
+                COMMAND CENTER
+                       │
+       ┌───────────────┼────────────────┐
+       │               │                │
+   SUPPLIERS        PRICING         INVENTORY
+       │               │                │
+       └───────────────┼────────────────┘
+                       │
+                 HOTEL OPPORTUNITY
+                       │
+              ┌────────┴────────┐
+              │                 │
+           REVENUE          OPERATIONS
+A manager can start at the top and drill all the way down to the individual hotel / supplier / rate.
+One more thing I'd add: "So What?"
+Every dashboard should have a small section:
+What changed?
+Price competitiveness decreased 3.2% WoW.
+Why?
+Primarily driven by 24 high-volume hotels in Dubai.
+Business impact
+Estimated ₹X revenue exposure.
+What should we do?
+Review Supplier B rates for those hotels.
+That turns you from someone who creates reports into someone who provides business intelligence.
+Given your existing work with supplier families, DisplayTotalFare, markup and win rates, I think you are actually in a very good position to build this in QuickSight without needing a completely new data platform.
+If you want to make a serious impression, I'd start with 3 dashboards only: Hotel Supply Command Center → Price Competitiveness → Supplier Scorecard, get those polished, and then expand.
