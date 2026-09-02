@@ -1,0 +1,54 @@
+Multi DPM — Reference Rate Resolver and Logic Alignment
+
+The primary objective is to move the reference rate selection logic into a new, extensible component (Reference Rate Resolver) to support multiple reference suppliers (Multi DPM) while ensuring the system remains robust across all supplier types, not just BHI.
+
+Reference Rate Resolver Component
+
+*   A new component will be developed to identify the reference supplier and rate based on specific rules and logic for both OTA and non-OTA criteria.
+*   The goal is to centralize reference rate selection logic in one place, removing custom logic currently embedded within the investment component.
+*   The resolver will identify the best reference supplier based on a "cheapest rate" logic.
+*   The system must be extensible to support any supplier, ensuring it is not tightly coupled only to BHI.
+
+Prepaid and Postpaid Reference Logic
+
+*   Logic for applying postpaid references to prepaid rates will move from the investment class to the new resolver class.
+*   The resolver will handle the identification of reference rates for various scenarios, such as postpaid acting as a reference for edit, CO, and COL.
+*   The investment component will still handle the final business decision of filtering out rates (e.g., filtering EPS) based on the reference rate provided by the resolver.
+
+Room Identification and Grouping
+
+*   Grouping will be based on parameters including room code, basis, and refundability.
+*   Room identification must remain consistent; since prepaid and postpaid rates share the same room ID, they will be grouped together.
+*   Once grouped, the resolver will find the preferred supplier's rate within that group to apply the reference markup.
+
+Search-Only and Non-Sellable Rates
+
+*   Certain suppliers, specifically BHI, provide reference rates that are not sellable (non-bookable).
+*   A new classification for these suppliers is being introduced, referred to as "search only" or "reference only."
+*   Rates from search-only suppliers will be used for reference substitution during enrichment but will be dropped before the deduplication (D-dupe) stage to prevent non-bookable itineraries from reaching the user.
+
+API and Configuration Changes
+
+*   The existing reference supplier endpoint, which currently returns a single supplier ID string (e.g., EPS), will be updated to return a list of supplier IDs.
+*   This change is intended to support multiple reference suppliers without breaking existing functionality.
+*   There was a discussion regarding whether to move this configuration to the supplier level (agency level) to allow for primary and secondary reference preferences.
+
+Multi DPM Goals and Markup Impact
+
+*   Multi DPM (Dynamic Pricing Markup) aims to maximize markup while maintaining competitive rates for the user.
+*   The system follows a rule that it will not sell above the reference fare.
+*   If a negotiated price is higher than the reference rate, the system may apply zero markup to remain competitive.
+*   The interaction between the reference rate and the D-dupe logic must be carefully managed to ensure the cheapest valid rate is selected.
+
+Technical Gaps and Requirements
+
+*   A critical gap was identified: the lack of a detailed algorithm or flow diagram for the Reference Rate Resolver.
+*   The team needs a formal mapping of conditions to determine how the system shifts between reference rates and how it handles fare constraints (e.g., when total fare is lower than the reference rate).
+*   Without a documented algorithm, there is a risk that the code will not correctly handle complex fare validation scenarios.
+
+Action Items
+
+*   Develop a detailed algorithm and flow diagram for the Reference Rate Resolver, including all conditional shifts and fare constraints.
+*   Update the reference supplier endpoint to return a list of supplier IDs instead of a single string.
+*   Finalize the naming convention for non-bookable suppliers (e.g., "Search Only" vs "Reference Only").
+*   Revisit the supplier configuration model to determine if primary/secondary reference preferences should be stored at the supplier level.
